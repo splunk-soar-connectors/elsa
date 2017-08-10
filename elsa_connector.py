@@ -46,8 +46,6 @@ _artifact_common = {
     "run_automation": False  # Don't run any playbooks, when this artifact is added
 }
 
-requests.packages.urllib3.disable_warnings()
-
 
 # Define the App Class
 class ElsaConnector(BaseConnector):
