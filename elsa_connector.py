@@ -46,6 +46,8 @@ _artifact_common = {
     "run_automation": False  # Don't run any playbooks, when this artifact is added
 }
 
+requests.packages.urllib3.disable_warnings()
+
 
 # Define the App Class
 class ElsaConnector(BaseConnector):
@@ -507,7 +509,8 @@ class ElsaConnector(BaseConnector):
         container.update(_container_common)
         container['source_data_identifier'] = event_data["id"]
         event_time = time.strftime(DATETIME_FORMAT, time.localtime(float(event_data["timestamp"])))
-        container['name'] = event_data["program"] + " event at " + event_time
+        container_name = event_data["program"] + " event at " + event_time
+        container['name'] = cef_dict.get("sigmsg", container_name)
         container['data'] = {'raw_event': event_data}
 
         ret_val, message, container_id = self.save_container(container)
@@ -532,6 +535,7 @@ class ElsaConnector(BaseConnector):
         if event_data["program"] == "bro_http" and artifact['cef']['requestURL'] and artifact['cef']['destinationDnsName']:
             artifact['cef']['fullRequestURL'] = artifact['cef']['destinationDnsName'] + artifact['cef']['requestURL']
             artifact['cef_types']["fullRequestURL"] = [ "domain" ]
+        artifact['cef']['startTime'] = event_time
         artifact['name'] = "Event Artifact"
         artifact['run_automation'] = True
         ret_val, status_string, artifact_id = self.save_artifact(artifact)
