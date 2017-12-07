@@ -21,6 +21,7 @@ from phantom.action_result import ActionResult
 # Imports local to this App
 from elsa_consts import *
 
+import ast
 import requests
 import urllib
 from datetime import datetime, timedelta
@@ -444,7 +445,7 @@ class ElsaConnector(BaseConnector):
 
         for event_no in range(no_of_events):
 
-            self.send_progress("Working on Event # {0}".format(event_no))
+            self.send_progress("Working on Event # {0}".format(event_no + 1))
             raw_event_data = pull_results[event_no]
             # framing the cef dict
             cef_dict = self._frame_cef_dict(raw_event_data["_fields"])
@@ -493,7 +494,9 @@ class ElsaConnector(BaseConnector):
 
         for field in raw_event_data:
             # remove out all the empty entries and the default entries
-            if field["value"] not in CEF_EXCLUDE and "any" not in field["class"]:
+            if field["value"] not in CEF_EXCLUDE:
+                # append this clause to above if statement to remove default
+                # entries:  and "any" not in field["class"]:
                 # change the keys to cef format
                 name = self._frame_cef_keys(field["field"], cef_map)
                 # pick the corresponding entry from the combined raw event data
@@ -507,7 +510,8 @@ class ElsaConnector(BaseConnector):
         container.update(_container_common)
         container['source_data_identifier'] = event_data["id"]
         event_time = time.strftime(DATETIME_FORMAT, time.localtime(float(event_data["timestamp"])))
-        container['name'] = event_data["program"] + " event at " + event_time
+        container_name = event_data.get("program", "Generic") + " event at " + event_time
+        container['name'] = cef_dict.get("sigmsg", container_name)
         container['data'] = {'raw_event': event_data}
 
         ret_val, message, container_id = self.save_container(container)
@@ -532,6 +536,7 @@ class ElsaConnector(BaseConnector):
         if event_data["program"] == "bro_http" and artifact['cef']['requestURL'] and artifact['cef']['destinationDnsName']:
             artifact['cef']['fullRequestURL'] = artifact['cef']['destinationDnsName'] + artifact['cef']['requestURL']
             artifact['cef_types']["fullRequestURL"] = [ "domain" ]
+        artifact['cef']['startTime'] = event_time
         artifact['name'] = "Event Artifact"
         artifact['run_automation'] = True
         ret_val, status_string, artifact_id = self.save_artifact(artifact)
@@ -603,11 +608,18 @@ class ElsaConnector(BaseConnector):
         self.debug_print("Number of items retrieved before returning data: {0}".format(run_query_response["recordsReturned"]))
 
         try:
-            action_result.update_summary({'total_records': run_query_response["totalRecords"]})
-            action_result.update_summary({'records_returned': run_query_response["recordsReturned"]})
-            action_result.update_summary({'query_id': run_query_response["qid"]})
+            summary = action_result.update_summary({})
+            summary['total_records'] = run_query_response["totalRecords"]
+            summary['records_returned'] = run_query_response["recordsReturned"]
+            summary['query_id'] = run_query_response["qid"]
             cef_data = []
+
             cef_map_to_use = param.get("output_cef_map", DEFAULT_CEF_MAP)
+            if type(cef_map_to_use) == str:
+                try:
+                    cef_map_to_use = ast.literal_eval(cef_map_to_use)
+                except Exception as e:
+                    return action_result.set_status(phantom.APP_ERROR, "Error building cef map from string: {0}".format(e))
 
             for event_no in range(len(run_query_response["results"])):
                 raw_event_data = run_query_response["results"][event_no]
@@ -629,7 +641,7 @@ class ElsaConnector(BaseConnector):
 
         self.save_progress("Run Query successful")
 
-        return action_result.set_status(phantom.APP_SUCCESS, "Run Query event success")
+        return action_result.set_status(phantom.APP_SUCCESS)
 
     def handle_action(self, param):
 
