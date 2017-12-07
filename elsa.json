@@ -12,7 +12,7 @@
     "product_vendor": "Security Onion",
     "product_name": "ELSA",
     "product_version_regex": ".*",
-    "min_phantom_version": "3.0.265",
+    "min_phantom_version": "3.0.251",
     "logo": "secOnion.png",
     "configuration": {
         "base_url": {
