@@ -89,7 +89,7 @@
     "actions": [
         {
             "action": "test connectivity",
-            "description": "Validate the asset configuration for connectivity.",
+            "description": "Validate the asset configuration for connectivity",
             "type": "test",
             "identifier": "test_asset_connectivity",
             "read_only": true,
