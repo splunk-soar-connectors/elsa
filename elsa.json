@@ -1,7 +1,7 @@
 {
     "appid": "9f4e346f-7892-4bd5-b1bf-a9d5f9976054",
     "name": "ELSA (Security Onion)",
-    "description": "ELSA instance included in Security Onion security distribution. Each event is parsed into a container.",
+    "description": "This app integrates with the ELSA service included in the Security Onion security distribution",
     "publisher": "Phantom",
     "type": "siem",
     "license": "Copyright (c) Phantom Cyber Corporation, 2016-2017",
@@ -138,7 +138,7 @@
         },
         {
             "action": "run query",
-            "description": "Query ELSA for some specific data.",
+            "description": "Run a query against ELSA",
             "type": "query",
             "identifier": "run_query",
             "read_only": true,
