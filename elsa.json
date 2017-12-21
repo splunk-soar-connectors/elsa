@@ -4,7 +4,7 @@
     "description": "ELSA instance included in Security Onion security distribution. Each event is parsed into a container.",
     "publisher": "Phantom",
     "type": "siem",
-    "license": "Copyright (c) Phantom Cyber Corporation 2016-2017",
+    "license": "Copyright (c) Phantom Cyber Corporation, 2016-2017",
     "main_module": "elsa_connector.pyc",
     "app_version": "1.0.7",
     "utctime_updated": "2017-12-20T21:33:38.000000Z",
