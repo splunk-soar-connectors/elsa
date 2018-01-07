@@ -258,7 +258,7 @@ class ElsaConnector(BaseConnector):
 
         # function to separate on poll and poll now
         config = self.get_config()
-        limit = config["max_containers"]
+        limit = str(config["max_containers"])
         query_params = dict()
         last_time = self._state.get(ELSA_JSON_LAST_DATE_TIME)
 
