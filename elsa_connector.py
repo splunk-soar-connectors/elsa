@@ -30,8 +30,6 @@ import hashlib
 import json
 from pytz import timezone
 import pytz
-import os
-import inspect
 import re
 
 
@@ -74,42 +72,12 @@ class ElsaConnector(BaseConnector):
 
         return result.set_status(phantom.APP_ERROR, message)
 
-    def _load_state(self):
-
-        # get the directory of the class
-        dirpath = os.path.dirname(inspect.getfile(self.__class__))
-        asset_id = self.get_asset_id()
-        self._state_file_path = "{0}/{1}_serialized_data.json".format(dirpath, asset_id)
-        try:
-            with open(self._state_file_path, 'r') as f:
-                in_json = f.read()
-                self._state = json.loads(in_json)
-        except Exception as e:
-            self.debug_print("In _load_state: Exception: {0}".format(str(e)))
-            pass
-        self.debug_print("Loaded state: ", self._state)
-        return phantom.APP_SUCCESS
-
-    def _save_state(self):
-
-        self.debug_print("Saving state: ", self._state)
-        if (not self._state_file_path):
-            self.debug_print("_state_file_path is None in _save_state")
-            return phantom.APP_SUCCESS
-        try:
-            with open(self._state_file_path, 'w+') as f:
-                f.write(json.dumps(self._state))
-        except Exception as e:
-            self.debug_print("Exception in _save_state", e)
-            pass
-        return phantom.APP_SUCCESS
-
     def initialize(self):
-        self._load_state()
+        self._state = self.load_state()
         return phantom.APP_SUCCESS
 
     def finalize(self):
-        self._save_state()
+        self.save_state(self._state)
         return phantom.APP_SUCCESS
 
     def _make_rest_call(self, action_result, headers={}, data=None, method="post"):
