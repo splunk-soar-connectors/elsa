@@ -4,7 +4,7 @@
     "description": "This app integrates with the ELSA service included in the Security Onion security distribution",
     "publisher": "Phantom",
     "type": "siem",
-    "license": "Copyright (c) Phantom Cyber Corporation, 2016-2018",
+    "license": "Copyright (c) Phantom Cyber Corporation, 2018",
     "main_module": "elsa_connector.pyc",
     "app_version": "1.0.11",
     "utctime_updated": "2018-01-08T19:38:25.000000Z",
@@ -36,7 +36,7 @@
             "required": true
         },
         "apikey": {
-            "data_type": "string",
+            "data_type": "password",
             "description": "Apikey for username (found in /etc/elsa_web.conf file on Security Onion machine)",
             "order": 3,
             "required": true
