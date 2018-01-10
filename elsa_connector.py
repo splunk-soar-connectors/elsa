@@ -68,8 +68,6 @@ class ElsaConnector(BaseConnector):
 
         message = "Status Code: {0}. Data: {1}".format(response.status_code, data if data else 'Not Specified')
 
-        self.debug_print("Rest error: {0}".format(message))
-
         return result.set_status(phantom.APP_ERROR, message)
 
     def initialize(self):
@@ -97,7 +95,6 @@ class ElsaConnector(BaseConnector):
 
         try:
             response = request_func(query_url, data=data if data else None, headers=headers, verify=config["verify_server_cert"])
-            self.debug_print("Just after the request_func")
         except Exception as e:
             return (action_result.set_status(phantom.APP_ERROR, "Error connecting to Device: {0}".format(e)), None)
 
@@ -110,9 +107,7 @@ class ElsaConnector(BaseConnector):
             return (phantom.APP_SUCCESS, None)
 
         try:
-            # self.debug_print("In rest call, before converting response to JSON: " + str(response.text))
             resp_json = response.json()
-            # self.debug_print("In rest call, converted response to JSON: " + str(resp_json))
         except Exception as e:
             return (action_result.set_status(phantom.APP_ERROR, "Error converting response to json"), None)
 
@@ -125,7 +120,6 @@ class ElsaConnector(BaseConnector):
         apikey = config["apikey"]
         calculated_api_key = hashlib.sha512(epoch_time + apikey).hexdigest()
         auth_string = "ApiKey " + username + ":" + epoch_time + ":" + calculated_api_key
-        self.debug_print("Calculated auth_string: " + auth_string)
 
         return auth_string
 
@@ -133,7 +127,6 @@ class ElsaConnector(BaseConnector):
         config = self.get_config()
         query_url = ELSA_QUERY_URL % config["base_url"]
         try:
-            self.debug_print("In the #Format Query# try loop")
             auth_string = self._build_auth_string()
             query_headers = {"Content-Type": "application/x-www-form-urlencoded", "Authorization": auth_string}
             permissions = urllib.quote('{"class_id":{"0":1},"program_id":{"0":1},"node_id":{"0":1},"host_id":{"0":1}}')
@@ -142,7 +135,6 @@ class ElsaConnector(BaseConnector):
             full_query = full_query.replace("'", '"')
             query_json = urllib.quote(full_query)
             body = 'permissions=' + permissions + '&q=' + query_json
-            self.debug_print("Just before query - body:" + str(body))
             self.save_progress(phantom.APP_PROG_CONNECTING_TO_ELLIPSES, query_url)
 
         except Exception as e:
@@ -163,7 +155,6 @@ class ElsaConnector(BaseConnector):
         test_query_params = {}
 
         try:
-            self.debug_print("In the try loop")
             test_query_params["start"] = self._get_first_start_time()
             test_query_params["limit"] = config["max_containers"]
             test_query_params["end"] = self._get_end_time()
@@ -191,7 +182,6 @@ class ElsaConnector(BaseConnector):
                 return action_result.get_status()
 
             self.save_progress("Test connectivity Passed")
-            # self.debug_print("Length of results value: {0}".format(len(response["results"])))
 
             action_result.set_status(phantom.APP_SUCCESS)
 
@@ -378,15 +368,12 @@ class ElsaConnector(BaseConnector):
 
         try:
 
-            self.debug_print("In the #On Poll# try loop")
             query_headers, body = self._format_query(full_query_dict)
             ret_val, response = self._make_rest_call(action_result, headers=query_headers, data=body)
 
             if (phantom.is_fail(ret_val)):
                 self.save_progress("On Poll failed during make rest call")
                 return action_result.get_status()
-
-            self.debug_print("On Poll passed make rest call")
 
         except Exception as e:
             self.set_status(phantom.APP_ERROR, ELSA_ERR_SERVER_CONNECTION, e)
@@ -483,7 +470,6 @@ class ElsaConnector(BaseConnector):
         container['data'] = {'raw_event': event_data}
 
         ret_val, message, container_id = self.save_container(container)
-        self.debug_print(CREATE_CONTAINER_RESPONSE.format(ret_val, message, container_id))
 
         if (phantom.is_fail(ret_val)):
             message = "Failed to add Container error msg: {0}".format(message)
@@ -566,7 +552,6 @@ class ElsaConnector(BaseConnector):
             if (phantom.is_fail(ret_val)):
                 self.save_progress("Run Query failed during make rest call")
                 return action_result.get_status()
-            self.debug_print("Run query passed make rest call")
 
         except Exception as e:
             self.set_status(phantom.APP_ERROR, ELSA_ERR_SERVER_CONNECTION, e)
