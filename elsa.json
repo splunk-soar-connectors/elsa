@@ -1,399 +1,562 @@
 {
-    "appid"       : "9f4e346f-7892-4bd5-b1bf-a9d5f9976054",
-    "name"      : "ELSA (Security Onion)",
-    "description" : "ELSA instance included in Security Onion security distribution. Each event is parsed into a container.",
+    "appid": "9f4e346f-7892-4bd5-b1bf-a9d5f9976054",
+    "name": "ELSA (Security Onion)",
+    "description": "This app integrates with the ELSA service included in the Security Onion security distribution",
     "publisher": "Phantom",
     "type": "siem",
-    "license": "Copyright (c) Phantom Cyber Corporation 2016-2017",
-    "main_module" : "elsa_connector.pyc",
-    "app_version": "1.0.3",
-    "utctime_updated": "2017-08-10T00:30:58.000000Z",
+    "license": "Copyright (c) Phantom Cyber Corporation, 2018",
+    "main_module": "elsa_connector.pyc",
+    "app_version": "1.0.13",
+    "utctime_updated": "2018-01-10T22:19:41.000000Z",
     "package_name": "phantom_elsa",
     "product_vendor": "Security Onion",
     "product_name": "ELSA",
     "product_version_regex": ".*",
-    "min_phantom_version": "3.0.190",
-    "logo": "secOnion.png",
+    "min_phantom_version": "3.0.251",
+    "logo": "logo_securityonion.svg",
+    "logo_dark": "logo_securityonion_dark.svg",
     "configuration": {
-      "base_url": {
-          "data_type": "string",
-          "description": "Device URL, e.g. https://security-onion.local OR https://192.168.100.100",
-          "order": 0,
-          "required": true
-      },
-      "verify_server_cert": {
-          "data_type": "boolean",
-          "description": "Verify server certificate",
-          "required": true,
-          "order": 1,
-          "default": false
-      },
-      "username": {
-          "data_type": "string",
-          "description": "User name corresponding to the api key (found in /etc/elsa_web.conf file on Security Onion machine)",
-          "order": 2,
-          "required": true 
-      },
-      "apikey": {
-          "data_type": "string",
-          "description": "Apikey for username (found in /etc/elsa_web.conf file on Security Onion machine)",
-          "order": 3,
-          "required": true
-      },
-      "query_type": {
-          "data_type": "string",
-          "description": "Type/class of events to pull in from ELSA.",
-          "value_list": ["class=BRO_CONN","class=SNORT","class=BRO_HTTP"],
-          "order": 4,
-          "required": true
-      },
-      "max_containers": {
-          "data_type": "numeric",
-          "description": "Maximum events for scheduled polling",
-          "order": 5,
-          "default": 100,
-          "required": true
-      },
-      "first_run_max_events": {
-          "data_type": "numeric",
-          "order": 6,
-          "description": "Maximum events to poll first time",
-          "default": 2000,
-          "required": true
-      },
-      "poll_hours": {
-          "data_type": "numeric",
-          "order": 7,
-          "description": "Ingest events in last N hours (POLL NOW and First Run)",
-          "default": 1,
-          "required": false
-      },
-      "query_timeout": {
-          "data_type": "numeric",
-          "order": 8,
-          "description": "Max Time to wait for query to finish (seconds)",
-          "default": 20,
-          "required": false
-      },
-      "timezone": {
-        "data_type": "timezone",
-        "order": 9,
-        "description": "Timezone configured on device",
-        "required": true
-      }
-  },
-    "actions": [
-      {
-        "action": "test connectivity",
-        "description": "Validate the asset configuration for connectivity.",
-        "type": "test",
-        "identifier": "test_asset_connectivity",
-        "read_only": true,
-        "parameters": {
-        },
-        "output": [],
-        "versions":"EQ(*)"
-      },
-      {
-        "action": "on poll",
-        "description": "Callback action for the on_poll ingest functionality.",
-        "type": "ingest",
-        "identifier": "on_poll",
-        "read_only": true,
-        "parameters": {
-          "container_id": {
+        "base_url": {
             "data_type": "string",
+            "description": "Device URL, e.g. https://security-onion.local OR https://192.168.100.100",
             "order": 0,
-            "description": "Container IDs to limit the ingestion to.",
-            "allow_list": true
-          },
-          "start_time": {
-            "data_type": "numeric",
-            "order": 1,
-            "description": "Start of time range, in epoch time (milliseconds)",
-            "verbose": "If not specified, the default is past 10 days"
-          },
-          "end_time": {
-            "data_type": "numeric",
-            "order": 2,
-            "description": "End of time range, in epoch time (milliseconds)",
-            "verbose": "If not specified, the default is now"
-          },
-          "container_count": {
-            "data_type": "numeric",
-            "order": 3,
-            "description": "Maximum number of container records to query for."
-          },
-          "artifact_count": {
-            "data_type": "numeric",
-            "order": 4,
-            "description": "Maximum number of artifact records to query for."
-          }
-        },
-        "output": [],
-        "versions":"EQ(*)"
-      },
-      {
-        "action": "run query",
-        "description": "Query ELSA for some specific data.",
-        "type": "query",
-        "identifier": "run_query",
-        "read_only": true,
-        "parameters": {
-          "query_string": {
-            "data_type": "string",
-            "order": 0,
-            "description": "Exact query string to run into ELSA. See https://goo.gl/zEIoYO for query help.",
-            "verbose": "This can be as simple as a single IP address or structured ELSA query.",
-            "primary": true,
             "required": true
-          },
-          "output_cef_map": {
-            "data_type": "string",
+        },
+        "verify_server_cert": {
+            "data_type": "boolean",
+            "description": "Verify server certificate",
+            "required": true,
             "order": 1,
-            "description": "json dictionary for mapping expected query output to cef values.",
-            "verbose": "Format: {<expected output fieldname>: <cef fieldname>, ...}  Example: {'dstIP':'destinationAddress'}.",
-            "required": false
-          },
-          "start_time": {
+            "default": false
+        },
+        "username": {
             "data_type": "string",
+            "description": "User name corresponding to the api key (found in /etc/elsa_web.conf file on Security Onion machine)",
             "order": 2,
-            "description": "Start of time range, in YYYY-MM-DD HH:MM:SS format.  Example: 2017-01-23 19:12:39",
-            "verbose": "If not specified, the default is past 10 days",
-            "required": false
-          },
-          "end_time": {
-            "data_type": "string",
+            "required": true
+        },
+        "apikey": {
+            "data_type": "password",
+            "description": "Apikey for username (found in /etc/elsa_web.conf file on Security Onion machine)",
             "order": 3,
-            "description": "End of time range, in YYYY-MM-DD HH:MM:SS format.  Example: 2017-01-23 19:12:39",
-            "verbose": "If not specified, the default is now",
-            "required": false
-          },
-          "limit": {
-            "data_type": "numeric",
+            "required": true
+        },
+        "query_type": {
+            "data_type": "string",
+            "description": "Type/class of events to pull in from ELSA.",
+            "value_list": [
+                "class=BRO_CONN",
+                "class=SNORT",
+                "class=BRO_HTTP"
+            ],
             "order": 4,
-            "description": "Number of results to limit the query to.",
-            "verbose": "If not specified, the default is 100",
-            "required": false
-          },
-          "orderby_dir": {
-            "data_type": "string",
+            "required": true
+        },
+        "max_containers": {
+            "data_type": "numeric",
+            "description": "Maximum events for scheduled polling",
             "order": 5,
-            "description": "Direction to sort results.",
-            "value_list":["asc","desc"]
-          }
+            "default": 100,
+            "required": true
         },
-        "render": {
-          "width": 12,
-          "title": "Run Query",
-          "type": "table",
-          "height": 5
+        "first_run_max_events": {
+            "data_type": "numeric",
+            "order": 6,
+            "description": "Maximum events to poll first time",
+            "default": 2000,
+            "required": true
         },
-        "output": [
-          {
-            "data_path": "action_result.data.*.cef.*.method",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.useragent",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.requestURL",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.sourcePort",
-            "column_name": "Source Port",
-            "column_order": 2,
-            "data_type": "string",
-            "contains": [
-              "port"
-            ]
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.statuscode",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.sourceAddress",
-            "column_name": "Source Address",
-            "column_order": 1,
-            "data_type": "string",
-            "contains": [
-              "ip"
-            ]
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.destinationPort",
-            "column_name": "Destination Port",
-            "column_order": 4,
-            "data_type": "string",
-            "contains": [
-              "port"
-            ]
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.destinationAddress",
-            "column_name": "Destination Address",
-            "column_order": 3,
-            "data_type": "string",
-            "contains": [
-              "ip"
-            ]
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.destinationDnsName",
-            "data_type": "string",
-            "column_name": "Destination DNS Name",
-            "column_order": 5,
-            "data_type": "string",
-            "contains": [
-              "domain"
-            ]
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.proto",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.sigmsg",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.sigsid",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.sigpriority",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.sigclassification",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.mimetype",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.contentlength",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.pktsin",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.bytesin",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.pktsout",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.service",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.bytesOut",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.connduration",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.respcountrycode",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.md5",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.sha1",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.source",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.rxhosts",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.txhosts",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.seenbytes",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.data.*.cef.*.totalbytes",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.status",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.message",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.summary.query_id",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.summary.total_records",
-            "data_type": "numeric"
-          },
-          {
-            "data_path": "action_result.summary.records_returned",
-            "data_type": "numeric"
-          },
-          {
-            "data_path": "action_result.parameter.limit",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.parameter.context.guid",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.parameter.context.artifact_id",
-            "data_type": "numeric"
-          },
-          {
-            "data_path": "action_result.parameter.end_time",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.parameter.start_time",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.parameter.orderby_dir",
-            "data_type": "string"
-          },
-          {
-            "data_path": "action_result.parameter.query_string",
-            "data_type": "string"
-          },
-          {
-            "data_path": "summary.total_objects",
-            "data_type": "numeric"
-          },
-          {
-            "data_path": "summary.total_objects_successful",
-            "data_type": "numeric"
-          }
-        ],
-        "versions":"EQ(*)"
-      }
+        "poll_hours": {
+            "data_type": "numeric",
+            "order": 7,
+            "description": "Ingest events in last N hours (POLL NOW and First Run)",
+            "default": 1,
+            "required": false
+        },
+        "query_timeout": {
+            "data_type": "numeric",
+            "order": 8,
+            "description": "Max Time to wait for query to finish (seconds)",
+            "default": 20,
+            "required": false
+        },
+        "timezone": {
+            "data_type": "timezone",
+            "order": 9,
+            "description": "Timezone configured on device",
+            "required": true
+        }
+    },
+    "actions": [
+        {
+            "action": "test connectivity",
+            "description": "Validate the asset configuration for connectivity",
+            "type": "test",
+            "identifier": "test_asset_connectivity",
+            "read_only": true,
+            "parameters": {},
+            "output": [],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "on poll",
+            "description": "Callback action for the on_poll ingest functionality",
+            "type": "ingest",
+            "identifier": "on_poll",
+            "read_only": true,
+            "parameters": {
+                "container_id": {
+                    "data_type": "string",
+                    "order": 0,
+                    "description": "Container IDs to limit the ingestion to.",
+                    "allow_list": true
+                },
+                "start_time": {
+                    "data_type": "numeric",
+                    "order": 1,
+                    "description": "Start of time range, in epoch time (milliseconds)",
+                    "verbose": "If not specified, the default is past 10 days"
+                },
+                "end_time": {
+                    "data_type": "numeric",
+                    "order": 2,
+                    "description": "End of time range, in epoch time (milliseconds)",
+                    "verbose": "If not specified, the default is now"
+                },
+                "container_count": {
+                    "data_type": "numeric",
+                    "order": 3,
+                    "description": "Maximum number of container records to query for."
+                },
+                "artifact_count": {
+                    "data_type": "numeric",
+                    "order": 4,
+                    "description": "Maximum number of artifact records to query for."
+                }
+            },
+            "output": [],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "run query",
+            "description": "Run a query against ELSA",
+            "type": "investigate",
+            "identifier": "run_query",
+            "read_only": true,
+            "parameters": {
+                "query_string": {
+                    "data_type": "string",
+                    "order": 0,
+                    "description": "Exact query string to run into ELSA. See https://goo.gl/zEIoYO for query help.",
+                    "verbose": "This can be as simple as a single IP address or structured ELSA query.",
+                    "primary": true,
+                    "required": true
+                },
+                "output_cef_map": {
+                    "data_type": "string",
+                    "order": 1,
+                    "description": "json dictionary for mapping expected query output to cef values.",
+                    "verbose": "Format: {<expected output fieldname>: <cef fieldname>, ...}  Example: {'dstIP':'destinationAddress'}.",
+                    "required": false
+                },
+                "start_time": {
+                    "data_type": "string",
+                    "order": 2,
+                    "description": "Start of time range, in YYYY-MM-DD HH:MM:SS format.  Example: 2017-01-23 19:12:39",
+                    "verbose": "If not specified, the default is past 10 days",
+                    "required": false
+                },
+                "end_time": {
+                    "data_type": "string",
+                    "order": 3,
+                    "description": "End of time range, in YYYY-MM-DD HH:MM:SS format.  Example: 2017-01-23 19:12:39",
+                    "verbose": "If not specified, the default is now",
+                    "required": false
+                },
+                "limit": {
+                    "data_type": "numeric",
+                    "order": 4,
+                    "description": "Number of results to limit the query to.",
+                    "verbose": "If not specified, the default is 100",
+                    "required": false
+                },
+                "orderby_dir": {
+                    "data_type": "string",
+                    "order": 5,
+                    "description": "Direction to sort results.",
+                    "value_list": [
+                        "asc",
+                        "desc"
+                    ],
+                    "default": "asc"
+                }
+            },
+            "render": {
+                "width": 12,
+                "title": "Run Query",
+                "type": "table",
+                "height": 5
+            },
+            "output": [
+                {
+                    "data_path": "action_result.data.*.cef.*.method",
+                    "data_type": "string",
+                    "example_values": [
+                        "GET"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.useragent",
+                    "data_type": "string",
+                    "example_values": [
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.requestURL",
+                    "data_type": "string",
+                    "example_values": [
+                        "/dt?advEntityId=117806&asId=e967f178-639f-8d64-68f6-2694d9253fb1&tv={c:w25NpP,pingTime:-2,time:149,type:a,sca:{avgrn1:0,dfp:{df:4,sz:640.360,dom:div}},env:{sf:0,pom:1},vv:3.5.0,rt:1,cb:0,th:0,es:0,sa:1,sc:0,ha:1,fif:0,gm:0,slTimes:{i:0,o:149,n:0,pp:0,pm:0"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.sourcePort",
+                    "column_name": "Source Port",
+                    "column_order": 2,
+                    "data_type": "string",
+                    "contains": [
+                        "port"
+                    ],
+                    "example_values": [
+                        "60344"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.statuscode",
+                    "data_type": "string",
+                    "example_values": [
+                        "200"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.sourceAddress",
+                    "column_name": "Source Address",
+                    "column_order": 1,
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ],
+                    "example_values": [
+                        "192.168.1.3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.destinationPort",
+                    "column_name": "Destination Port",
+                    "column_order": 4,
+                    "data_type": "string",
+                    "contains": [
+                        "port"
+                    ],
+                    "example_values": [
+                        "80"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.destinationAddress",
+                    "column_name": "Destination Address",
+                    "column_order": 3,
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ],
+                    "example_values": [
+                        "69.172.216.111"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.destinationDnsName",
+                    "data_type": "string",
+                    "column_name": "Destination DNS Name",
+                    "column_order": 5,
+                    "contains": [
+                        "domain"
+                    ],
+                    "example_values": [
+                        "dt.adsafeprotected.com"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.proto",
+                    "data_type": "string",
+                    "example_values": [
+                        "TCP"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.sigmsg",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.sigsid",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.sigpriority",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.sigclassification",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.mimetype",
+                    "data_type": "string",
+                    "example_values": [
+                        "image/gif"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.contentlength",
+                    "data_type": "string",
+                    "example_values": [
+                        "43"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.pktsin",
+                    "data_type": "string",
+                    "example_values": [
+                        "2"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.bytesin",
+                    "data_type": "string",
+                    "example_values": [
+                        "53"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.pktsout",
+                    "data_type": "string",
+                    "example_values": [
+                        "2"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.service",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.bytesOut",
+                    "data_type": "string",
+                    "example_values": [
+                        "101"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.connduration",
+                    "data_type": "string",
+                    "example_values": [
+                        "0.004203"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.respcountrycode",
+                    "data_type": "string",
+                    "example_values": [
+                        "US"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.md5",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.sha1",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.source",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.rxhosts",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.txhosts",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.seenbytes",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.totalbytes",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Total records: 11, Query id: 601, Records returned: 10"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.query_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "601"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.total_records",
+                    "data_type": "numeric",
+                    "example_values": [
+                        11
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.records_returned",
+                    "data_type": "numeric",
+                    "example_values": [
+                        10
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.limit",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.end_time",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.start_time",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.orderby_dir",
+                    "data_type": "string",
+                    "example_values": [
+                        "asc"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.query_string",
+                    "data_type": "string",
+                    "example_values": [
+                        "53"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.deviceEventCategory",
+                    "data_type": "string",
+                    "example_values": [
+                        "bro_http"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.class",
+                    "data_type": "string",
+                    "example_values": [
+                        "BRO_HTTP"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.host",
+                    "data_type": "string",
+                    "example_values": [
+                        "127.0.0.1"
+                    ],
+                    "contains": [
+                        "ip"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.referer",
+                    "data_type": "string",
+                    "example_values": [
+                        "http://www.zdnet.com/article/build-your-own-supercomputer-out-of-raspberry-pi-boards/"
+                    ],
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.versionminor2",
+                    "data_type": "string",
+                    "example_values": [
+                        "2785"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.softwaretype",
+                    "data_type": "string",
+                    "example_values": [
+                        "HTTP::BROWSER"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Chrome"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.versionmajor",
+                    "data_type": "string",
+                    "example_values": [
+                        "53"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.version",
+                    "data_type": "string",
+                    "example_values": [
+                        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/53.0.2785.143 Chrome/53.0.2785.143 Safari/537.36"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cef.*.versionminor3",
+                    "data_type": "string",
+                    "example_values": [
+                        "143"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.output_cef_map",
+                    "data_type": "string",
+                    "example_values": [
+                        "{\"program\": \"deviceEventCategory\",     \"dstport\": \"destinationPort\",     \"dstip\": \"destinationAddress\",     \"srcip\": \"sourceAddress\",     \"srcport\": \"sourcePort\",     \"site\": \"destinationDnsName\",     \"uri\": \"requestURL\",     \"bytesout\": \"bytesOut\"}"
+                    ]
+                }
+            ],
+            "versions": "EQ(*)"
+        }
     ]
 }

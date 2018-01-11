@@ -1,7 +1,7 @@
 <!-- 
 File: readme.html
 
-Copyright (c) Phantom Cyber Corporation, 2014-2016
+Copyright (c) Phantom Cyber Corporation, 2018
 
 This unpublished material is proprietary to Phantom Cyber.
 All rights reserved. The methods and
@@ -12,58 +12,37 @@ of Phantom Cyber.
 -->
 
     <p>
-    Security Onion is a popular Linux distribution pre-loaded with numerous Network Security Monitoring tools such as Snort, Bro, and Suricata.  Security Onion uses ELSA (Enterprise Log Search and Archive) to store all the IDS alerts from Snort, Bro and Suricata.  This ELSA app enable the collection of various types of events and the corresponding event related information into containers and artifacts in Phantom.
+    Security Onion is a popular Linux distribution pre-loaded with numerous Network Security Monitoring tools such as Snort, Bro, and Suricata.  Security Onion uses ELSA (Enterprise Log Search and Archive) to store all the IDS alerts from Snort, Bro and Suricata.  This app collects the events and event details from ELSA into Phantom containers and artifacts.
     </p>
     <p>
-    The first thing to do is create the ELSA asset in Phantom and fill up the Device URL, the User name and the ApiKey.  The User name and ApiKey are found in the /etc/elsa_web.conf file on the Security Onion machine.  You will need to have root privileges to access this file.  See the below screenshot for an example of the /etc/elsa_web.conf file that you are looking for.  
+    First, create an ELSA asset in Phantom and supply the Device URL, the User name and the Apikey.  The User name and ApiKey are found in the /etc/elsa_web.conf file on the Security Onion machine.  You will need to have root privileges to access this file.  See the below screenshot for an example of the /etc/elsa_web.conf file that you are looking for.  
     <br>
     <a href="/app_resource/elsasecurityonion_9f4e346f-7892-4bd5-b1bf-a9d5f9976054/img/elsa_web_conf.png">
         <img src="/app_resource/elsasecurityonion_9f4e346f-7892-4bd5-b1bf-a9d5f9976054/img/elsa_web_conf.png"/>
     </a>
     </p>
     <p>
-    <br>
-    You will also need to the set the "event type" you want to pull in from ELSA.  Currently, three basic queries are supported as shown below.  More may be added in the future and/or a free form query box made available.
+    You will also need to the set the "event type" you want to pull in from ELSA.  Currently, three basic queries are supported as shown below.
     <br>
        <a href="/app_resource/elsasecurityonion_9f4e346f-7892-4bd5-b1bf-a9d5f9976054/img/type.png">
         <img src="/app_resource/elsasecurityonion_9f4e346f-7892-4bd5-b1bf-a9d5f9976054/img/type.png"/>
     </a>
+    <p>
     The other values can be left in the default state for now.
-    <br>
-    However it's good practice to set the Label of the objects from this source to a <b>NEW ENTRY</b> called <b>Event</b>.
-    <br>
+    </p>
+    <p>
+    Select a label for the containers that this asset will create. Either pick from the existing list, or select <b>New Entry</b> and type a new label. In this screenshot we are using <b>Event</b>:
+    </p>
     <a href="/app_resource/elsasecurityonion_9f4e346f-7892-4bd5-b1bf-a9d5f9976054/img/ingest_settings.png">
         <img src="/app_resource/elsasecurityonion_9f4e346f-7892-4bd5-b1bf-a9d5f9976054/img/ingest_settings.png"/>
     </a>
     <p>
     Once the asset is saved, run Test Connectivity and make sure it passes. The Test Connectivity action attempts to validate the User name and the ApiKey that the user has provided by connecting to the configured Device URL. The connection is tested by running a basic query and checking that the HTTP response is valid.  
     </p>
-    <p>
-    <br>
-    Now that the config is out of the way, let's delve into the possible actions for this app.  For ingestion, there are two modes that ingestion can occur. One thing to note is that for every event that is ingested, a single container containing an Event artifact is created.
-    <br>
-    The container contains the raw data regarding the event that is acquired from the data source while the key details regarding the event are stored in the artifact of the container.
-<h2>POLL NOW</h2>
-    <p>
-    POLL NOW should be used to get a sense of the containers and artifacts that are created by the app. The POLL NOW dialog allows the user to set the "Maximum containers" that should be ingested at this instance. Since a single container is created for each event, this value equates to the maximum events that are ingested by the app. The app will fetch the events in the order they were created in the data source. The app allows the user to ingest events up to 1 year old, this time interval can be configured in hours using the <b>poll_hours</b> asset config, For e.g. to ingest events that have been generated in the last 2 hours, configure this value to be 2. However the query to ingest this data can be quite time consuming. 
-    </p>
-<h2>Scheduled Polling</h2>
-    <p>
-       This mode is used to schedule a polling action on the asset at regular intervals, which is configured via the INGEST SETTINGS tab of the asset. It makes use of the following asset configuration parameters (among others):
 
-    <ul>
-    <li>Maximum events to poll first time</li>
-    The app detects the first time it is polling an asset and will ingest these number of events (at the most). It will also use the <b>poll_hours</b> value.
-    <li>Maximum Containers for scheduled polling</li>
-        For all scheduled polls after the first, the app will ingest these number of events.
-    </ul>
-    <p>In case of Scheduled Polling, on every poll, the app remembers the time of the last event that it has ingested and will pickup from the same time in the next polling cycle.
-    For best results, keep the poll interval and <i>Maximum  Containers for scheduled polling</i> values close to the number of events you would get within a time interval. This way, every poll will end up ingesting all the new events.<br>
-    It is also very important that the <i>Maximum Container for scheduled  polling</i> configured should be greater than maximum events that are generated <b>per second</b>. If the app detects it got the maximum configured events and all occured in the same second, it will start polling from the next second in the next polling cycle.
-    </p>
 <h2>Containers created</h2>
     <p>
-       As mentioned before, the app will create a single container for each event that it ingests with a single artifact called Event Artifact.
+       The app will create a single container for each event that it ingests with a single artifact called Event Artifact.
 <h2>Event Artifact</h2>
       The details regarding the event that are acquired from the API call to ELSA will be collected and the data that are related to the type of event are all stored into the CEF fields and are added to the artifact.  There are some default CEF field mappings in the app for Snort and BRO_CONN and BRO_HTTP event types.  The fields that are present in the artifact greatly depend upon the type of the event that was created. Different events will have different types of values in the artifacts.
     <br>
@@ -74,7 +53,11 @@ of Phantom Cyber.
     </p>
 <h2>Run Query</h2>
     <p>
-        Finally, there is a "run query" action that enables the user to run a query in ELSA either as a manual action or as a chained action in a playbook in order to gather more data.  This action allows the user to fill in the details for the exact query string to run.  This can be as simple as an IP address or use the ELSA query language to get back more specific information.  There are some tips for what to use for query strings in ELSA at this shortened URL: https://goo.gl/zEIoYO.  The action also takes a JSON formatted "cef_map" parameter that allows the user to properly map the fields they expect to the proper CEF field so the output results can be used to further chain actions in a playbook.  The other parameters are fairly self-explanatory.  
+        Finally, there is a "run query" action that enables the user to run a query in ELSA either as a manual action or as a chained action in a playbook in order to gather more data.  This action allows the user to fill in the details for the exact query string to run.  This can be as simple as an IP address or use the ELSA query language to get back more specific information.  For information, click <a href="https://github.com/Security-Onion-Solutions/security-onion/wiki/ELSAQueryTips">here</a> for some tips on what to use for query strings in ELSA.  The action also takes a JSON formatted "cef_map" parameter that allows the user to properly map the fields they expect to the proper CEF field so the output results can be used to further chain actions in a playbook. The following is an example "cef_map" parameter:
+        <pre><code>
+            {"program": "deviceEventCategory", "dstport": "destinationPort", "dstip": "destinationAddress", "srcip": "sourceAddress", "srcport": "sourcePort", "site": "destinationDnsName", "uri": "requestURL", "bytesout": "bytesOut"}
+        </code></pre>
+        The other parameters are fairly self-explanatory.  
     <br>
     <a href="/app_resource/elsasecurityonion_9f4e346f-7892-4bd5-b1bf-a9d5f9976054/img/query.png">
         <img src="/app_resource/elsasecurityonion_9f4e346f-7892-4bd5-b1bf-a9d5f9976054/img/query.png"/>

@@ -1,7 +1,7 @@
 # --
 # File: elsa_connector.py
 #
-# Copyright (c) Phantom Cyber Corporation, 2016-2017
+# Copyright (c) Phantom Cyber Corporation, 2018
 #
 # This unpublished material is proprietary to Phantom Cyber.
 # All rights reserved. The methods and
@@ -21,6 +21,7 @@ from phantom.action_result import ActionResult
 # Imports local to this App
 from elsa_consts import *
 
+import ast
 import requests
 import urllib
 from datetime import datetime, timedelta
@@ -29,8 +30,6 @@ import hashlib
 import json
 from pytz import timezone
 import pytz
-import os
-import inspect
 import re
 
 
@@ -69,46 +68,14 @@ class ElsaConnector(BaseConnector):
 
         message = "Status Code: {0}. Data: {1}".format(response.status_code, data if data else 'Not Specified')
 
-        self.debug_print("Rest error: {0}".format(message))
-
         return result.set_status(phantom.APP_ERROR, message)
 
-    def _load_state(self):
-
-        # get the directory of the class
-        dirpath = os.path.dirname(inspect.getfile(self.__class__))
-        asset_id = self.get_asset_id()
-        self._state_file_path = "{0}/{1}_serialized_data.json".format(dirpath, asset_id)
-        try:
-            with open(self._state_file_path, 'r') as f:
-                in_json = f.read()
-                self._state = json.loads(in_json)
-        except Exception as e:
-            self.debug_print("In _load_state: Exception: {0}".format(str(e)))
-            pass
-        self.debug_print("Loaded state: ", self._state)
-        return phantom.APP_SUCCESS
-
-    def _save_state(self):
-
-        self.debug_print("Saving state: ", self._state)
-        if (not self._state_file_path):
-            self.debug_print("_state_file_path is None in _save_state")
-            return phantom.APP_SUCCESS
-        try:
-            with open(self._state_file_path, 'w+') as f:
-                f.write(json.dumps(self._state))
-        except Exception as e:
-            self.debug_print("Exception in _save_state", e)
-            pass
-        return phantom.APP_SUCCESS
-
     def initialize(self):
-        self._load_state()
+        self._state = self.load_state()
         return phantom.APP_SUCCESS
 
     def finalize(self):
-        self._save_state()
+        self.save_state(self._state)
         return phantom.APP_SUCCESS
 
     def _make_rest_call(self, action_result, headers={}, data=None, method="post"):
@@ -128,7 +95,6 @@ class ElsaConnector(BaseConnector):
 
         try:
             response = request_func(query_url, data=data if data else None, headers=headers, verify=config["verify_server_cert"])
-            self.debug_print("Just after the request_func")
         except Exception as e:
             return (action_result.set_status(phantom.APP_ERROR, "Error connecting to Device: {0}".format(e)), None)
 
@@ -141,9 +107,7 @@ class ElsaConnector(BaseConnector):
             return (phantom.APP_SUCCESS, None)
 
         try:
-            # self.debug_print("In rest call, before converting response to JSON: " + str(response.text))
             resp_json = response.json()
-            # self.debug_print("In rest call, converted response to JSON: " + str(resp_json))
         except Exception as e:
             return (action_result.set_status(phantom.APP_ERROR, "Error converting response to json"), None)
 
@@ -156,7 +120,6 @@ class ElsaConnector(BaseConnector):
         apikey = config["apikey"]
         calculated_api_key = hashlib.sha512(epoch_time + apikey).hexdigest()
         auth_string = "ApiKey " + username + ":" + epoch_time + ":" + calculated_api_key
-        self.debug_print("Calculated auth_string: " + auth_string)
 
         return auth_string
 
@@ -164,7 +127,6 @@ class ElsaConnector(BaseConnector):
         config = self.get_config()
         query_url = ELSA_QUERY_URL % config["base_url"]
         try:
-            self.debug_print("In the #Format Query# try loop")
             auth_string = self._build_auth_string()
             query_headers = {"Content-Type": "application/x-www-form-urlencoded", "Authorization": auth_string}
             permissions = urllib.quote('{"class_id":{"0":1},"program_id":{"0":1},"node_id":{"0":1},"host_id":{"0":1}}')
@@ -173,7 +135,6 @@ class ElsaConnector(BaseConnector):
             full_query = full_query.replace("'", '"')
             query_json = urllib.quote(full_query)
             body = 'permissions=' + permissions + '&q=' + query_json
-            self.debug_print("Just before query - body:" + str(body))
             self.save_progress(phantom.APP_PROG_CONNECTING_TO_ELLIPSES, query_url)
 
         except Exception as e:
@@ -194,7 +155,6 @@ class ElsaConnector(BaseConnector):
         test_query_params = {}
 
         try:
-            self.debug_print("In the try loop")
             test_query_params["start"] = self._get_first_start_time()
             test_query_params["limit"] = config["max_containers"]
             test_query_params["end"] = self._get_end_time()
@@ -222,7 +182,6 @@ class ElsaConnector(BaseConnector):
                 return action_result.get_status()
 
             self.save_progress("Test connectivity Passed")
-            # self.debug_print("Length of results value: {0}".format(len(response["results"])))
 
             action_result.set_status(phantom.APP_SUCCESS)
 
@@ -289,7 +248,7 @@ class ElsaConnector(BaseConnector):
 
         # function to separate on poll and poll now
         config = self.get_config()
-        limit = config["max_containers"]
+        limit = str(config["max_containers"])
         query_params = dict()
         last_time = self._state.get(ELSA_JSON_LAST_DATE_TIME)
 
@@ -409,15 +368,12 @@ class ElsaConnector(BaseConnector):
 
         try:
 
-            self.debug_print("In the #On Poll# try loop")
             query_headers, body = self._format_query(full_query_dict)
             ret_val, response = self._make_rest_call(action_result, headers=query_headers, data=body)
 
             if (phantom.is_fail(ret_val)):
                 self.save_progress("On Poll failed during make rest call")
                 return action_result.get_status()
-
-            self.debug_print("On Poll passed make rest call")
 
         except Exception as e:
             self.set_status(phantom.APP_ERROR, ELSA_ERR_SERVER_CONNECTION, e)
@@ -444,7 +400,7 @@ class ElsaConnector(BaseConnector):
 
         for event_no in range(no_of_events):
 
-            self.send_progress("Working on Event # {0}".format(event_no))
+            self.send_progress("Working on Event # {0}".format(event_no + 1))
             raw_event_data = pull_results[event_no]
             # framing the cef dict
             cef_dict = self._frame_cef_dict(raw_event_data["_fields"])
@@ -493,7 +449,9 @@ class ElsaConnector(BaseConnector):
 
         for field in raw_event_data:
             # remove out all the empty entries and the default entries
-            if field["value"] not in CEF_EXCLUDE and "any" not in field["class"]:
+            if field["value"] not in CEF_EXCLUDE:
+                # append this clause to above if statement to remove default
+                # entries:  and "any" not in field["class"]:
                 # change the keys to cef format
                 name = self._frame_cef_keys(field["field"], cef_map)
                 # pick the corresponding entry from the combined raw event data
@@ -507,11 +465,11 @@ class ElsaConnector(BaseConnector):
         container.update(_container_common)
         container['source_data_identifier'] = event_data["id"]
         event_time = time.strftime(DATETIME_FORMAT, time.localtime(float(event_data["timestamp"])))
-        container['name'] = event_data["program"] + " event at " + event_time
+        container_name = event_data.get("program", "Generic") + " event at " + event_time
+        container['name'] = cef_dict.get("sigmsg", container_name)
         container['data'] = {'raw_event': event_data}
 
         ret_val, message, container_id = self.save_container(container)
-        self.debug_print(CREATE_CONTAINER_RESPONSE.format(ret_val, message, container_id))
 
         if (phantom.is_fail(ret_val)):
             message = "Failed to add Container error msg: {0}".format(message)
@@ -532,6 +490,7 @@ class ElsaConnector(BaseConnector):
         if event_data["program"] == "bro_http" and artifact['cef']['requestURL'] and artifact['cef']['destinationDnsName']:
             artifact['cef']['fullRequestURL'] = artifact['cef']['destinationDnsName'] + artifact['cef']['requestURL']
             artifact['cef_types']["fullRequestURL"] = [ "domain" ]
+        artifact['cef']['startTime'] = event_time
         artifact['name'] = "Event Artifact"
         artifact['run_automation'] = True
         ret_val, status_string, artifact_id = self.save_artifact(artifact)
@@ -593,7 +552,6 @@ class ElsaConnector(BaseConnector):
             if (phantom.is_fail(ret_val)):
                 self.save_progress("Run Query failed during make rest call")
                 return action_result.get_status()
-            self.debug_print("Run query passed make rest call")
 
         except Exception as e:
             self.set_status(phantom.APP_ERROR, ELSA_ERR_SERVER_CONNECTION, e)
@@ -603,11 +561,18 @@ class ElsaConnector(BaseConnector):
         self.debug_print("Number of items retrieved before returning data: {0}".format(run_query_response["recordsReturned"]))
 
         try:
-            action_result.update_summary({'total_records': run_query_response["totalRecords"]})
-            action_result.update_summary({'records_returned': run_query_response["recordsReturned"]})
-            action_result.update_summary({'query_id': run_query_response["qid"]})
+            summary = action_result.update_summary({})
+            summary['total_records'] = run_query_response["totalRecords"]
+            summary['records_returned'] = run_query_response["recordsReturned"]
+            summary['query_id'] = run_query_response["qid"]
             cef_data = []
+
             cef_map_to_use = param.get("output_cef_map", DEFAULT_CEF_MAP)
+            if type(cef_map_to_use) == str:
+                try:
+                    cef_map_to_use = ast.literal_eval(cef_map_to_use)
+                except Exception as e:
+                    return action_result.set_status(phantom.APP_ERROR, "Error building cef map from string: {0}".format(e))
 
             for event_no in range(len(run_query_response["results"])):
                 raw_event_data = run_query_response["results"][event_no]
@@ -629,7 +594,7 @@ class ElsaConnector(BaseConnector):
 
         self.save_progress("Run Query successful")
 
-        return action_result.set_status(phantom.APP_SUCCESS, "Run Query event success")
+        return action_result.set_status(phantom.APP_SUCCESS)
 
     def handle_action(self, param):
 
