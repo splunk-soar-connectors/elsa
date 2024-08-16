@@ -16,25 +16,23 @@
 #
 # of Phantom Cyber Corporation.
 # Phantom imports
-import phantom.app as phantom
+import ast
+import hashlib
+import json
+import re
+import time
+import urllib
+from datetime import datetime, timedelta
 
-from phantom.base_connector import BaseConnector
+import phantom.app as phantom
+import pytz
+import requests
 from phantom.action_result import ActionResult
+from phantom.base_connector import BaseConnector
+from pytz import timezone
 
 # Imports local to this App
 from elsa_consts import *
-
-import ast
-import requests
-import urllib
-from datetime import datetime, timedelta
-import time
-import hashlib
-import json
-from pytz import timezone
-import pytz
-import re
-
 
 _container_common = {
     "description": "Container added by Phantom ELSA App",
@@ -621,6 +619,7 @@ class ElsaConnector(BaseConnector):
 if __name__ == '__main__':
 
     import sys
+
     import pudb
     pudb.set_trace()
 

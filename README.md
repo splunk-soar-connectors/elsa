@@ -1,16 +1,16 @@
 [comment]: # "Auto-generated SOAR connector documentation"
-# ELSA \(Security Onion\)
+# ELSA (Security Onion)
 
 Publisher: Phantom  
-Connector Version: 1\.0\.15  
+Connector Version: 1.0.18  
 Product Vendor: Security Onion  
 Product Name: ELSA  
-Product Version Supported (regex): "\.\*"  
-Minimum Product Version: 3\.0\.251  
+Product Version Supported (regex): ".\*"  
+Minimum Product Version: 6.2.1  
 
 This app integrates with the ELSA service included in the Security Onion security distribution
 
-[comment]: # "File: readme.md"
+[comment]: # "File: README.md"
 [comment]: # "Copyright (c) 2018 Splunk Inc."
 [comment]: # ""
 [comment]: # "Licensed under the Apache License, Version 2.0 (the 'License');"
@@ -89,20 +89,20 @@ The below configuration variables are required for this Connector to operate.  T
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
-**base\_url** |  required  | string | Device URL, e\.g\. https\://security\-onion\.local OR https\://192\.168\.100\.100
-**verify\_server\_cert** |  required  | boolean | Verify server certificate
-**username** |  required  | string | User name corresponding to the api key \(found in /etc/elsa\_web\.conf file on Security Onion machine\)
-**apikey** |  required  | password | Apikey for username \(found in /etc/elsa\_web\.conf file on Security Onion machine\)
-**query\_type** |  required  | string | Type/class of events to pull in from ELSA\.
-**max\_containers** |  required  | numeric | Maximum events for scheduled polling
-**first\_run\_max\_events** |  required  | numeric | Maximum events to poll first time
-**poll\_hours** |  optional  | numeric | Ingest events in last N hours \(POLL NOW and First Run\)
-**query\_timeout** |  optional  | numeric | Max Time to wait for query to finish \(seconds\)
+**base_url** |  required  | string | Device URL, e.g. https://security-onion.local OR https://192.168.100.100
+**verify_server_cert** |  required  | boolean | Verify server certificate
+**username** |  required  | string | User name corresponding to the api key (found in /etc/elsa_web.conf file on Security Onion machine)
+**apikey** |  required  | password | Apikey for username (found in /etc/elsa_web.conf file on Security Onion machine)
+**query_type** |  required  | string | Type/class of events to pull in from ELSA.
+**max_containers** |  required  | numeric | Maximum events for scheduled polling
+**first_run_max_events** |  required  | numeric | Maximum events to poll first time
+**poll_hours** |  optional  | numeric | Ingest events in last N hours (POLL NOW and First Run)
+**query_timeout** |  optional  | numeric | Max Time to wait for query to finish (seconds)
 **timezone** |  required  | timezone | Timezone configured on device
 
 ### Supported Actions  
 [test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity  
-[on poll](#action-on-poll) - Callback action for the on\_poll ingest functionality  
+[on poll](#action-on-poll) - Callback action for the on_poll ingest functionality  
 [run query](#action-run-query) - Run a query against ELSA  
 
 ## action: 'test connectivity'
@@ -118,7 +118,7 @@ No parameters are required for this action
 No Output  
 
 ## action: 'on poll'
-Callback action for the on\_poll ingest functionality
+Callback action for the on_poll ingest functionality
 
 Type: **ingest**  
 Read only: **True**
@@ -126,11 +126,11 @@ Read only: **True**
 #### Action Parameters
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
-**container\_id** |  optional  | Container IDs to limit the ingestion to\. | string | 
-**start\_time** |  optional  | Start of time range, in epoch time \(milliseconds\) | numeric | 
-**end\_time** |  optional  | End of time range, in epoch time \(milliseconds\) | numeric | 
-**container\_count** |  optional  | Maximum number of container records to query for\. | numeric | 
-**artifact\_count** |  optional  | Maximum number of artifact records to query for\. | numeric | 
+**container_id** |  optional  | Container IDs to limit the ingestion to. | string | 
+**start_time** |  optional  | Start of time range, in epoch time (milliseconds) | numeric | 
+**end_time** |  optional  | End of time range, in epoch time (milliseconds) | numeric | 
+**container_count** |  optional  | Maximum number of container records to query for. | numeric | 
+**artifact_count** |  optional  | Maximum number of artifact records to query for. | numeric | 
 
 #### Action Output
 No Output  
@@ -144,66 +144,66 @@ Read only: **True**
 #### Action Parameters
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
-**query\_string** |  required  | Exact query string to run into ELSA\. See https\://goo\.gl/zEIoYO for query help\. | string | 
-**output\_cef\_map** |  optional  | json dictionary for mapping expected query output to cef values\. | string | 
-**start\_time** |  optional  | Start of time range, in YYYY\-MM\-DD HH\:MM\:SS format\.  Example\: 2017\-01\-23 19\:12\:39 | string | 
-**end\_time** |  optional  | End of time range, in YYYY\-MM\-DD HH\:MM\:SS format\.  Example\: 2017\-01\-23 19\:12\:39 | string | 
-**limit** |  optional  | Number of results to limit the query to\. | numeric | 
-**orderby\_dir** |  optional  | Direction to sort results\. | string | 
+**query_string** |  required  | Exact query string to run into ELSA. See https://goo.gl/zEIoYO for query help. | string | 
+**output_cef_map** |  optional  | json dictionary for mapping expected query output to cef values. | string | 
+**start_time** |  optional  | Start of time range, in YYYY-MM-DD HH:MM:SS format.  Example: 2017-01-23 19:12:39 | string | 
+**end_time** |  optional  | End of time range, in YYYY-MM-DD HH:MM:SS format.  Example: 2017-01-23 19:12:39 | string | 
+**limit** |  optional  | Number of results to limit the query to. | numeric | 
+**orderby_dir** |  optional  | Direction to sort results. | string | 
 
 #### Action Output
-DATA PATH | TYPE | CONTAINS
---------- | ---- | --------
-action\_result\.data\.\*\.cef\.\*\.method | string | 
-action\_result\.data\.\*\.cef\.\*\.useragent | string | 
-action\_result\.data\.\*\.cef\.\*\.requestURL | string | 
-action\_result\.data\.\*\.cef\.\*\.sourcePort | string |  `port` 
-action\_result\.data\.\*\.cef\.\*\.statuscode | string | 
-action\_result\.data\.\*\.cef\.\*\.sourceAddress | string |  `ip` 
-action\_result\.data\.\*\.cef\.\*\.destinationPort | string |  `port` 
-action\_result\.data\.\*\.cef\.\*\.destinationAddress | string |  `ip` 
-action\_result\.data\.\*\.cef\.\*\.destinationDnsName | string |  `domain` 
-action\_result\.data\.\*\.cef\.\*\.proto | string | 
-action\_result\.data\.\*\.cef\.\*\.sigmsg | string | 
-action\_result\.data\.\*\.cef\.\*\.sigsid | string | 
-action\_result\.data\.\*\.cef\.\*\.sigpriority | string | 
-action\_result\.data\.\*\.cef\.\*\.sigclassification | string | 
-action\_result\.data\.\*\.cef\.\*\.mimetype | string | 
-action\_result\.data\.\*\.cef\.\*\.contentlength | string | 
-action\_result\.data\.\*\.cef\.\*\.pktsin | string | 
-action\_result\.data\.\*\.cef\.\*\.bytesin | string | 
-action\_result\.data\.\*\.cef\.\*\.pktsout | string | 
-action\_result\.data\.\*\.cef\.\*\.service | string | 
-action\_result\.data\.\*\.cef\.\*\.bytesOut | string | 
-action\_result\.data\.\*\.cef\.\*\.connduration | string | 
-action\_result\.data\.\*\.cef\.\*\.respcountrycode | string | 
-action\_result\.data\.\*\.cef\.\*\.md5 | string | 
-action\_result\.data\.\*\.cef\.\*\.sha1 | string | 
-action\_result\.data\.\*\.cef\.\*\.source | string | 
-action\_result\.data\.\*\.cef\.\*\.rxhosts | string | 
-action\_result\.data\.\*\.cef\.\*\.txhosts | string | 
-action\_result\.data\.\*\.cef\.\*\.seenbytes | string | 
-action\_result\.data\.\*\.cef\.\*\.totalbytes | string | 
-action\_result\.status | string | 
-action\_result\.message | string | 
-action\_result\.summary\.query\_id | string | 
-action\_result\.summary\.total\_records | numeric | 
-action\_result\.summary\.records\_returned | numeric | 
-action\_result\.parameter\.limit | string | 
-action\_result\.parameter\.end\_time | string | 
-action\_result\.parameter\.start\_time | string | 
-action\_result\.parameter\.orderby\_dir | string | 
-action\_result\.parameter\.query\_string | string | 
-summary\.total\_objects | numeric | 
-summary\.total\_objects\_successful | numeric | 
-action\_result\.data\.\*\.cef\.\*\.deviceEventCategory | string | 
-action\_result\.data\.\*\.cef\.\*\.class | string | 
-action\_result\.data\.\*\.cef\.\*\.host | string |  `ip` 
-action\_result\.data\.\*\.cef\.\*\.referer | string |  `url` 
-action\_result\.data\.\*\.cef\.\*\.versionminor2 | string | 
-action\_result\.data\.\*\.cef\.\*\.softwaretype | string | 
-action\_result\.data\.\*\.cef\.\*\.name | string | 
-action\_result\.data\.\*\.cef\.\*\.versionmajor | string | 
-action\_result\.data\.\*\.cef\.\*\.version | string | 
-action\_result\.data\.\*\.cef\.\*\.versionminor3 | string | 
-action\_result\.parameter\.output\_cef\_map | string | 
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.data.\*.cef.\*.method | string |  |   GET 
+action_result.data.\*.cef.\*.useragent | string |  |   Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36 
+action_result.data.\*.cef.\*.requestURL | string |  |   /dt?advEntityId=117806&asId=e967f178-639f-8d64-68f6-2694d9253fb1&tv={c:w25NpP,pingTime:-2,time:149,type:a,sca:{avgrn1:0,dfp:{df:4,sz:640.360,dom:div}},env:{sf:0,pom:1},vv:3.5.0,rt:1,cb:0,th:0,es:0,sa:1,sc:0,ha:1,fif:0,gm:0,slTimes:{i:0,o:149,n:0,pp:0,pm:0 
+action_result.data.\*.cef.\*.sourcePort | string |  `port`  |   60344 
+action_result.data.\*.cef.\*.statuscode | string |  |   200 
+action_result.data.\*.cef.\*.sourceAddress | string |  `ip`  |   192.168.1.3 
+action_result.data.\*.cef.\*.destinationPort | string |  `port`  |   80 
+action_result.data.\*.cef.\*.destinationAddress | string |  `ip`  |   69.172.216.111 
+action_result.data.\*.cef.\*.destinationDnsName | string |  `domain`  |   dt.adsafeprotected.com 
+action_result.data.\*.cef.\*.proto | string |  |   TCP 
+action_result.data.\*.cef.\*.sigmsg | string |  |  
+action_result.data.\*.cef.\*.sigsid | string |  |  
+action_result.data.\*.cef.\*.sigpriority | string |  |  
+action_result.data.\*.cef.\*.sigclassification | string |  |  
+action_result.data.\*.cef.\*.mimetype | string |  |   image/gif 
+action_result.data.\*.cef.\*.contentlength | string |  |   43 
+action_result.data.\*.cef.\*.pktsin | string |  |   2 
+action_result.data.\*.cef.\*.bytesin | string |  |   53 
+action_result.data.\*.cef.\*.pktsout | string |  |   2 
+action_result.data.\*.cef.\*.service | string |  |  
+action_result.data.\*.cef.\*.bytesOut | string |  |   101 
+action_result.data.\*.cef.\*.connduration | string |  |   0.004203 
+action_result.data.\*.cef.\*.respcountrycode | string |  |   US 
+action_result.data.\*.cef.\*.md5 | string |  |  
+action_result.data.\*.cef.\*.sha1 | string |  |  
+action_result.data.\*.cef.\*.source | string |  |  
+action_result.data.\*.cef.\*.rxhosts | string |  |  
+action_result.data.\*.cef.\*.txhosts | string |  |  
+action_result.data.\*.cef.\*.seenbytes | string |  |  
+action_result.data.\*.cef.\*.totalbytes | string |  |  
+action_result.status | string |  |   success 
+action_result.message | string |  |   Total records: 11, Query id: 601, Records returned: 10 
+action_result.summary.query_id | string |  |   601 
+action_result.summary.total_records | numeric |  |   11 
+action_result.summary.records_returned | numeric |  |   10 
+action_result.parameter.limit | string |  |  
+action_result.parameter.end_time | string |  |  
+action_result.parameter.start_time | string |  |  
+action_result.parameter.orderby_dir | string |  |   asc 
+action_result.parameter.query_string | string |  |   53 
+summary.total_objects | numeric |  |   1 
+summary.total_objects_successful | numeric |  |   1 
+action_result.data.\*.cef.\*.deviceEventCategory | string |  |   bro_http 
+action_result.data.\*.cef.\*.class | string |  |   BRO_HTTP 
+action_result.data.\*.cef.\*.host | string |  `ip`  |   127.0.0.1 
+action_result.data.\*.cef.\*.referer | string |  `url`  |   http://www.zdnet.com/article/build-your-own-supercomputer-out-of-raspberry-pi-boards/ 
+action_result.data.\*.cef.\*.versionminor2 | string |  |   2785 
+action_result.data.\*.cef.\*.softwaretype | string |  |   HTTP::BROWSER 
+action_result.data.\*.cef.\*.name | string |  |   Chrome 
+action_result.data.\*.cef.\*.versionmajor | string |  |   53 
+action_result.data.\*.cef.\*.version | string |  |   Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/53.0.2785.143 Chrome/53.0.2785.143 Safari/537.36 
+action_result.data.\*.cef.\*.versionminor3 | string |  |   143 
+action_result.parameter.output_cef_map | string |  |   {"program": "deviceEventCategory",     "dstport": "destinationPort",     "dstip": "destinationAddress",     "srcip": "sourceAddress",     "srcport": "sourcePort",     "site": "destinationDnsName",     "uri": "requestURL",     "bytesout": "bytesOut"} 
