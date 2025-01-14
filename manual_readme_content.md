@@ -1,5 +1,5 @@
 [comment]: # "File: README.md"
-[comment]: # "Copyright (c) 2018 Splunk Inc."
+[comment]: # "Copyright (c) 2018-2025 Splunk Inc."
 [comment]: # ""
 [comment]: # "Licensed under the Apache License, Version 2.0 (the 'License');"
 [comment]: # "you may not use this file except in compliance with the License."
@@ -20,11 +20,11 @@ details from ELSA into Phantom containers and artifacts.
 First, create an ELSA asset in Phantom and supply the Device URL, the User name and the Apikey. The
 User name and ApiKey are found in the /etc/elsa_web.conf file on the Security Onion machine. You
 will need to have root privileges to access this file. See the below screenshot for an example of
-the /etc/elsa_web.conf file that you are looking for.  
+the /etc/elsa_web.conf file that you are looking for.
 [![](img/elsa_web_conf.png)](img/elsa_web_conf.png)
 
 You will also need to the set the "event type" you want to pull in from ELSA. Currently, three basic
-queries are supported as shown below.  
+queries are supported as shown below.
 [![](img/type.png)](img/type.png)
 
 The other values can be left in the default state for now.
@@ -50,8 +50,8 @@ The details regarding the event that are acquired from the API call to ELSA will
 the data that are related to the type of event are all stored into the CEF fields and are added to
 the artifact. There are some default CEF field mappings in the app for Snort and BRO_CONN and
 BRO_HTTP event types. The fields that are present in the artifact greatly depend upon the type of
-the event that was created. Different events will have different types of values in the artifacts.  
-[![](img/event_artifact.png)](img/event_artifact.png)  
+the event that was created. Different events will have different types of values in the artifacts.
+[![](img/event_artifact.png)](img/event_artifact.png)
 
 ## Run Query
 
@@ -66,7 +66,7 @@ results can be used to further chain actions in a playbook. The following is an 
 parameter:
 
                 {"program": "deviceEventCategory", "dstport": "destinationPort", "dstip": "destinationAddress", "srcip": "sourceAddress", "srcport": "sourcePort", "site": "destinationDnsName", "uri": "requestURL", "bytesout": "bytesOut"}
-            
 
-The other parameters are fairly self-explanatory.  
-[![](img/query.png)](img/query.png)  
+
+The other parameters are fairly self-explanatory.
+[![](img/query.png)](img/query.png)

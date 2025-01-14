@@ -1,6 +1,6 @@
 # File: elsa_consts.py
 #
-# Copyright (c) 2018 Splunk Inc.
+# Copyright (c) 2018-2025 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,16 +28,18 @@ ELSA_ERR_FORMAT_QUERY_FAILED = "Failed to correctly format the query using the d
 ELSA_ERR_SERVER_CONNECTION = "Connection to server failed"
 ELSA_ERR_CONNECTIVITY_TEST = "Connectivity test failed"
 ELSA_SUCC_CONNECTIVITY_TEST = "Connectivity test passed"
-DEFAULT_CEF_MAP = {"program": "deviceEventCategory",
+DEFAULT_CEF_MAP = {
+    "program": "deviceEventCategory",
     "dstport": "destinationPort",
     "dstip": "destinationAddress",
     "srcip": "sourceAddress",
     "srcport": "sourcePort",
     "site": "destinationDnsName",
     "uri": "requestURL",
-    "bytesout": "bytesOut"}
+    "bytesout": "bytesOut",
+}
 
-CEF_EXCLUDE = [u'', '', "0", u'0', '-']
+CEF_EXCLUDE = ["", "", "0", "0", "-"]
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 ELSA_JSON_QUERY_TIMEOUT = "query_timeout"
 ELSA_DEFAULT_TIMEOUT_SECS = 20

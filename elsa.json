@@ -2,17 +2,18 @@
     "appid": "9f4e346f-7892-4bd5-b1bf-a9d5f9976054",
     "name": "ELSA (Security Onion)",
     "description": "This app integrates with the ELSA service included in the Security Onion security distribution",
-    "publisher": "Phantom",
+    "publisher": "Splunk",
     "type": "siem",
-    "license": "Copyright (c) Phantom Cyber Corporation, 2018",
-    "main_module": "elsa_connector.pyc",
+    "license": "Copyright (c) Splunk Inc, 2018-2025",
+    "main_module": "elsa_connector.py",
+    "python_version": "3",
     "app_version": "1.0.18",
     "utctime_updated": "2022-01-07T22:27:30.000000Z",
     "package_name": "phantom_elsa",
     "product_vendor": "Security Onion",
     "product_name": "ELSA",
     "product_version_regex": ".*",
-    "min_phantom_version": "6.2.1",
+    "min_phantom_version": "6.3.0",
     "logo": "logo_securityonion.svg",
     "logo_dark": "logo_securityonion_dark.svg",
     "configuration": {
@@ -561,18 +562,6 @@
     ],
     "pip_dependencies": {
         "wheel": [
-            {
-                "module": "chardet",
-                "input_file": "wheels/chardet-3.0.4-py2.py3-none-any.whl"
-            },
-            {
-                "module": "idna",
-                "input_file": "wheels/idna-2.10-py2.py3-none-any.whl"
-            },
-            {
-                "module": "pytz",
-                "input_file": "wheels/pytz-2020.1-py2.py3-none-any.whl"
-            }
         ]
     }
 }

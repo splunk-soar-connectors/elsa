@@ -1,6 +1,6 @@
 # File: elsa_connector.py
 #
-# Copyright (c) 2018 Splunk Inc.
+# Copyright (c) 2018-2025 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,38 +12,34 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
-#
-#
-# of Phantom Cyber Corporation.
-# Phantom imports
+
 import ast
 import hashlib
 import json
 import re
 import time
 import urllib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import phantom.app as phantom
-import pytz
 import requests
 from phantom.action_result import ActionResult
 from phantom.base_connector import BaseConnector
-from pytz import timezone
 
 # Imports local to this App
 from elsa_consts import *
 
 _container_common = {
     "description": "Container added by Phantom ELSA App",
-    "run_automation": False  # Don't run any playbooks, when this artifact is added
+    "run_automation": False,  # Don't run any playbooks, when this artifact is added
 }
 
 _artifact_common = {
     "label": "artifact",
     "type": "network",
     "description": "Artifact added by Phantom ELSA App",
-    "run_automation": False  # Don't run any playbooks, when this artifact is added
+    "run_automation": False,  # Don't run any playbooks, when this artifact is added
 }
 
 
@@ -64,10 +60,10 @@ class ElsaConnector(BaseConnector):
 
         data = response.text
 
-        if ('application/json' in response.headers.get('Content-Type')) and (data):
-            data = data.replace('{', '[').replace('}', ']')
+        if ("application/json" in response.headers.get("Content-Type")) and (data):
+            data = data.replace("{", "[").replace("}", "]")
 
-        message = "Status Code: {0}. Data: {1}".format(response.status_code, data if data else 'Not Specified')
+        message = "Status Code: {0}. Data: {1}".format(response.status_code, data if data else "Not Specified")
 
         return result.set_status(phantom.APP_ERROR, message)
 
@@ -87,12 +83,12 @@ class ElsaConnector(BaseConnector):
         request_func = getattr(requests, method)
 
         # handle the error in case the caller specified a non-existant method
-        if (not request_func):
+        if not request_func:
             return (action_result.set_status(phantom.APP_ERROR, "API Unsupported method: {0}".format(method)), None)
 
-        if (method == 'delete'):
+        if method == "delete":
             headers = dict(headers)
-            del(headers['Content-Type'])
+            del headers["Content-Type"]
 
         try:
             response = request_func(query_url, data=data if data else None, headers=headers, verify=config["verify_server_cert"])
@@ -109,7 +105,7 @@ class ElsaConnector(BaseConnector):
 
         try:
             resp_json = response.json()
-        except Exception as e:
+        except Exception:
             return (action_result.set_status(phantom.APP_ERROR, "Error converting response to json"), None)
 
         return (phantom.APP_SUCCESS, resp_json)
@@ -135,7 +131,7 @@ class ElsaConnector(BaseConnector):
             full_query = full_query.replace(" ", "")
             full_query = full_query.replace("'", '"')
             query_json = urllib.quote(full_query)
-            body = 'permissions=' + permissions + '&q=' + query_json
+            body = "permissions=" + permissions + "&q=" + query_json
             self.save_progress(phantom.APP_PROG_CONNECTING_TO_ELLIPSES, query_url)
 
         except Exception as e:
@@ -162,23 +158,27 @@ class ElsaConnector(BaseConnector):
             test_query_params["timeout"] = config[ELSA_JSON_QUERY_TIMEOUT]
 
             # update test_query_params with remaining items:
-            test_query_params.update({"cutoff": "",
-                "offset": 0,
-                "orderby": "",
-                "orderby_dir": "asc",
-                "groupby": "",
-                "node": "",
-                "datasource": "",
-                "archive": 0,
-                "analytics": 0,
-                "nobatch": 0})
+            test_query_params.update(
+                {
+                    "cutoff": "",
+                    "offset": 0,
+                    "orderby": "",
+                    "orderby_dir": "asc",
+                    "groupby": "",
+                    "node": "",
+                    "datasource": "",
+                    "archive": 0,
+                    "analytics": 0,
+                    "nobatch": 0,
+                }
+            )
 
             full_query_dict = {"query_string": "class=BRO_CONN", "query_meta_params": test_query_params}
 
             query_headers, body = self._format_query(full_query_dict)
             ret_val, response = self._make_rest_call(action_result, headers=query_headers, data=body)
 
-            if (phantom.is_fail(ret_val)):
+            if phantom.is_fail(ret_val):
                 self.save_progress("Test Connectivity failed")
                 return action_result.get_status()
 
@@ -197,7 +197,7 @@ class ElsaConnector(BaseConnector):
 
         config = self.get_config()
         device_tz_string = config[ELSA_JSON_TIMEZONE]
-        to_tz = timezone(device_tz_string)
+        to_tz = ZoneInfo(device_tz_string)
 
         # get the time string passed into a datetime object
         last_time = datetime.strptime(last_time, DATETIME_FORMAT)
@@ -218,14 +218,13 @@ class ElsaConnector(BaseConnector):
 
         # get the device timezone
         device_tz_string = config[ELSA_JSON_TIMEZONE]
-        to_tz = timezone(device_tz_string)
+        to_tz = ZoneInfo(device_tz_string)
 
         # get the start time to use, i.e. current - poll hours in UTC
-        start_time = datetime.utcnow() - timedelta(hours=poll_hours)
-        start_time = start_time.replace(tzinfo=pytz.utc)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=poll_hours)
 
         # convert it to the timezone of the device
-        to_dt = to_tz.normalize(start_time.astimezone(to_tz))
+        to_dt = start_time.astimezone(to_tz)
 
         return to_dt.strftime(DATETIME_FORMAT)
 
@@ -235,13 +234,13 @@ class ElsaConnector(BaseConnector):
 
         # get the timezone of the device
         device_tz_string = config[ELSA_JSON_TIMEZONE]
-        to_tz = timezone(device_tz_string)
+        to_tz = ZoneInfo(device_tz_string)
 
         # get the start time to use, i.e. current - poll hours in UTC
-        start_time = datetime.utcnow().replace(tzinfo=pytz.utc)
+        start_time = datetime.now(timezone.utc)
 
         # convert it to the timezone of the device
-        to_dt = to_tz.normalize(start_time.astimezone(to_tz))
+        to_dt = start_time.astimezone(to_tz)
 
         return to_dt.strftime(DATETIME_FORMAT)
 
@@ -256,11 +255,11 @@ class ElsaConnector(BaseConnector):
         if self.is_poll_now():
             limit = param.get("container_count", 100)
             query_params["start"] = self._get_first_start_time()
-        elif (self._state.get('first_run', True)):
-            self._state['first_run'] = False
+        elif self._state.get("first_run", True):
+            self._state["first_run"] = False
             limit = config.get("first_run_max_events", 100)
             query_params["start"] = self._get_first_start_time()
-        elif (last_time):
+        elif last_time:
             query_params["start"] = str(last_time)
         else:
             query_params["start"] = self._get_first_start_time()
@@ -269,7 +268,7 @@ class ElsaConnector(BaseConnector):
         query_params["limit"] = limit
         query_params["end"] = self._get_end_time()
 
-        if (not self.is_poll_now()):
+        if not self.is_poll_now():
             self._state[ELSA_JSON_LAST_DATE_TIME] = query_params["end"]
 
         return query_params
@@ -286,9 +285,10 @@ class ElsaConnector(BaseConnector):
         except Exception as e:
             return action_result.set_status(phantom.APP_ERROR, "Invalid query timeout value", e)
 
-        if (query_timeout < int(ELSA_DEFAULT_TIMEOUT_SECS)):
-            return action_result.set_status(phantom.APP_ERROR,
-                    "Please specify a query timeout value greater or equal to {0}".format(ELSA_DEFAULT_TIMEOUT_SECS))
+        if query_timeout < int(ELSA_DEFAULT_TIMEOUT_SECS):
+            return action_result.set_status(
+                phantom.APP_ERROR, "Please specify a query timeout value greater or equal to {0}".format(ELSA_DEFAULT_TIMEOUT_SECS)
+            )
 
         config[ELSA_JSON_QUERY_TIMEOUT] = query_timeout
 
@@ -299,9 +299,10 @@ class ElsaConnector(BaseConnector):
         except Exception as e:
             return action_result.set_status(phantom.APP_ERROR, "Invalid Poll Hours value", e)
 
-        if (poll_hours < int(ELSA_DEFAULT_POLL_HOURS)):
-            return action_result.set_status(phantom.APP_ERROR,
-                    "Please specify the poll hours interval value greater than {0}".format(ELSA_DEFAULT_POLL_HOURS))
+        if poll_hours < int(ELSA_DEFAULT_POLL_HOURS):
+            return action_result.set_status(
+                phantom.APP_ERROR, "Please specify the poll hours interval value greater than {0}".format(ELSA_DEFAULT_POLL_HOURS)
+            )
 
         config[ELSA_JSON_POLL_HOURS] = poll_hours
 
@@ -312,10 +313,14 @@ class ElsaConnector(BaseConnector):
         except Exception as e:
             return action_result.set_status(phantom.APP_ERROR, "Invalid {0} value".format(ELSA_JSON_FIRST_MAX_CONTAINERS), e)
 
-        if (first_max_containers < int(ELSA_DEFAULT_MAX_CONTAINERS)):
-            return action_result.set_status(phantom.APP_ERROR,
-                    "Please specify the {0} value greater than {1}. Ideally this value should be greater than the max events generated within a second on the device.".format(
-                        ELSA_JSON_FIRST_MAX_CONTAINERS, ELSA_DEFAULT_MAX_CONTAINERS))
+        if first_max_containers < int(ELSA_DEFAULT_MAX_CONTAINERS):
+            return action_result.set_status(
+                phantom.APP_ERROR,
+                (
+                    f"Please specify the {ELSA_JSON_FIRST_MAX_CONTAINERS} value greater than {ELSA_DEFAULT_MAX_CONTAINERS}. "
+                    "Ideally this value should be greater than the max events generated within a second on the device."
+                ),
+            )
 
         config[ELSA_JSON_FIRST_MAX_CONTAINERS] = first_max_containers
 
@@ -338,32 +343,37 @@ class ElsaConnector(BaseConnector):
 
         ret_val = self._validate_my_config(action_result)
 
-        if (phantom.is_fail(ret_val)):
+        if phantom.is_fail(ret_val):
             return action_result.get_status()
 
         # Get the start and end times based on the type of poll
-        query_meta_params = self._get_query_params(param, )
+        query_meta_params = self._get_query_params(
+            param,
+        )
 
         # update query_meta_params with remaining items:
-        query_meta_params.update({"cutoff": "",
-            "offset": 0,
-            "orderby": "",
-            "orderby_dir": "asc",
-            "groupby": "",
-            "node": "",
-            "datasource": "",
-            "archive": 0,
-            "analytics": 0,
-            "nobatch": 0})
+        query_meta_params.update(
+            {
+                "cutoff": "",
+                "offset": 0,
+                "orderby": "",
+                "orderby_dir": "asc",
+                "groupby": "",
+                "node": "",
+                "datasource": "",
+                "archive": 0,
+                "analytics": 0,
+                "nobatch": 0,
+            }
+        )
 
         self.save_progress("Query Params set. Timeout: " + str(query_meta_params["timeout"]))
 
         full_query_dict = {"query_string": str(config["query_type"]), "query_meta_params": query_meta_params}
 
         message = "Getting max {0} event(s) between {1} and {2}".format(
-                query_meta_params.get('limit', '-'),
-                query_meta_params.get('start', '-'),
-                query_meta_params.get('end', '-'))
+            query_meta_params.get("limit", "-"), query_meta_params.get("start", "-"), query_meta_params.get("end", "-")
+        )
 
         self.save_progress(message)
 
@@ -372,7 +382,7 @@ class ElsaConnector(BaseConnector):
             query_headers, body = self._format_query(full_query_dict)
             ret_val, response = self._make_rest_call(action_result, headers=query_headers, data=body)
 
-            if (phantom.is_fail(ret_val)):
+            if phantom.is_fail(ret_val):
                 self.save_progress("On Poll failed during make rest call")
                 return action_result.get_status()
 
@@ -385,7 +395,7 @@ class ElsaConnector(BaseConnector):
 
         ret_val = self._handle_pull_data(response["results"])
 
-        if (phantom.is_fail(ret_val)):
+        if phantom.is_fail(ret_val):
             self.save_progress("Polling Failed")
             return action_result.set_status(phantom.APP_ERROR, "Polling failed")
 
@@ -397,7 +407,7 @@ class ElsaConnector(BaseConnector):
 
         no_of_events = len(pull_results)
         cef_data = []
-        self.save_progress("Got {0} event{1}", no_of_events, '' if (no_of_events == 1) else 's')
+        self.save_progress("Got {0} event{1}", no_of_events, "" if (no_of_events == 1) else "s")
 
         for event_no in range(no_of_events):
 
@@ -408,7 +418,7 @@ class ElsaConnector(BaseConnector):
 
             action_id = self.get_action_identifier()
             # check if we ran query as an action or are ingesting
-            if (action_id == self.ACTION_ID_RUN_QUERY):
+            if action_id == self.ACTION_ID_RUN_QUERY:
                 cef_data.append(cef_dict)
                 return phantom.APP_SUCCESS, cef_dict
             else:
@@ -416,7 +426,7 @@ class ElsaConnector(BaseConnector):
                 self._create_container(raw_event_data, cef_dict)
 
         # store the date time of the last event
-        if ((no_of_events) and (not self.is_poll_now())):
+        if (no_of_events) and (not self.is_poll_now()):
 
             config = self.get_config()
             last_date_time_epoch = float(pull_results[-1]["timestamp"])
@@ -426,10 +436,12 @@ class ElsaConnector(BaseConnector):
             date_strings = [float(x["timestamp"]) for x in pull_results]
             date_strings = set(date_strings)
 
-            if (len(date_strings) == 1):
-                self.debug_print("Getting all containers with the same date, down to the second." +
-                        " That means the device is generating max_containers=({0}) per second.".format(config[ELSA_JSON_MAX_CONTAINERS]) +
-                        " Skipping to the next second to not get stuck.")
+            if len(date_strings) == 1:
+                self.debug_print(
+                    "Getting all containers with the same date, down to the second."
+                    + " That means the device is generating max_containers=({0}) per second.".format(config[ELSA_JSON_MAX_CONTAINERS])
+                    + " Skipping to the next second to not get stuck."
+                )
                 self._state[ELSA_JSON_LAST_DATE_TIME] = self._get_next_start_time(self._state[ELSA_JSON_LAST_DATE_TIME])
 
         return phantom.APP_SUCCESS
@@ -437,7 +449,7 @@ class ElsaConnector(BaseConnector):
     def _frame_cef_keys(self, key, cef_map):
 
         # changing the keys to camel case to match cef formatting
-        name = re.sub('[^A-Za-z0-9]+', '', key)
+        name = re.sub("[^A-Za-z0-9]+", "", key)
         name = name[0].lower() + name[1:]
         if name in cef_map.keys():
             name = cef_map[name]
@@ -464,39 +476,39 @@ class ElsaConnector(BaseConnector):
         container = {}
 
         container.update(_container_common)
-        container['source_data_identifier'] = event_data["id"]
+        container["source_data_identifier"] = event_data["id"]
         event_time = time.strftime(DATETIME_FORMAT, time.localtime(float(event_data["timestamp"])))
         container_name = event_data.get("program", "Generic") + " event at " + event_time
-        container['name'] = cef_dict.get("sigmsg", container_name)
-        container['data'] = {'raw_event': event_data}
+        container["name"] = cef_dict.get("sigmsg", container_name)
+        container["data"] = {"raw_event": event_data}
 
         ret_val, message, container_id = self.save_container(container)
 
-        if (phantom.is_fail(ret_val)):
+        if phantom.is_fail(ret_val):
             message = "Failed to add Container error msg: {0}".format(message)
             self.debug_print(message)
             return phantom.APP_ERROR, "Failed Creating container"
 
-        if (not container_id):
+        if not container_id:
             message = "save_container did not return a container_id"
             self.debug_print(message)
             return phantom.APP_ERROR, "Failed creating container"
 
         artifact = {}
         artifact.update(_artifact_common)
-        artifact['container_id'] = container_id
-        artifact['source_data_identifier'] = 0  # We are only going to add a single artifact
-        artifact['cef'] = cef_dict
-        artifact['cef_types'] = {'destinationDnsName': [ "domain" ] }
-        if event_data["program"] == "bro_http" and artifact['cef']['requestURL'] and artifact['cef']['destinationDnsName']:
-            artifact['cef']['fullRequestURL'] = artifact['cef']['destinationDnsName'] + artifact['cef']['requestURL']
-            artifact['cef_types']["fullRequestURL"] = [ "domain" ]
-        artifact['cef']['startTime'] = event_time
-        artifact['name'] = "Event Artifact"
-        artifact['run_automation'] = True
+        artifact["container_id"] = container_id
+        artifact["source_data_identifier"] = 0  # We are only going to add a single artifact
+        artifact["cef"] = cef_dict
+        artifact["cef_types"] = {"destinationDnsName": ["domain"]}
+        if event_data["program"] == "bro_http" and artifact["cef"]["requestURL"] and artifact["cef"]["destinationDnsName"]:
+            artifact["cef"]["fullRequestURL"] = artifact["cef"]["destinationDnsName"] + artifact["cef"]["requestURL"]
+            artifact["cef_types"]["fullRequestURL"] = ["domain"]
+        artifact["cef"]["startTime"] = event_time
+        artifact["name"] = "Event Artifact"
+        artifact["run_automation"] = True
         ret_val, status_string, artifact_id = self.save_artifact(artifact)
 
-        if (phantom.is_fail(ret_val)):
+        if phantom.is_fail(ret_val):
             return phantom.APP_ERROR, "Failed to add artifact"
 
         return phantom.APP_SUCCESS, "Successfully created container and added artifact"
@@ -509,7 +521,7 @@ class ElsaConnector(BaseConnector):
 
         ret_val = self._validate_my_config(action_result)
 
-        if (phantom.is_fail(ret_val)):
+        if phantom.is_fail(ret_val):
             return action_result.get_status()
 
         query_meta_params = {}
@@ -519,19 +531,23 @@ class ElsaConnector(BaseConnector):
         query_meta_params["timeout"] = config[ELSA_JSON_QUERY_TIMEOUT]
 
         ret_val_time = self._validate_time_format(query_meta_params, action_result)
-        if (phantom.is_fail(ret_val_time)):
+        if phantom.is_fail(ret_val_time):
             return action_result.get_status()
 
         # update query_meta_params with remaining items:
-        query_meta_params.update({"cutoff": "",
-            "offset": 0,
-            "orderby": "",
-            "orderby_dir": param["orderby_dir"],
-            "node": "",
-            "datasource": "",
-            "archive": 0,
-            "analytics": 0,
-            "nobatch": 0})
+        query_meta_params.update(
+            {
+                "cutoff": "",
+                "offset": 0,
+                "orderby": "",
+                "orderby_dir": param["orderby_dir"],
+                "node": "",
+                "datasource": "",
+                "archive": 0,
+                "analytics": 0,
+                "nobatch": 0,
+            }
+        )
         self.save_progress("Query Params set. Timeout: " + str(query_meta_params["timeout"]))
 
         # build the full query dictionary for submission
@@ -539,10 +555,11 @@ class ElsaConnector(BaseConnector):
 
         # update the user
         message = "Getting max {0} event(s) between {1} and {2} matching query {3}".format(
-                query_meta_params.get('limit', '-'),
-                query_meta_params.get('start', '-'),
-                query_meta_params.get('end', '-'),
-                param.get("query_string", "-"))
+            query_meta_params.get("limit", "-"),
+            query_meta_params.get("start", "-"),
+            query_meta_params.get("end", "-"),
+            param.get("query_string", "-"),
+        )
         self.save_progress(message)
 
         try:
@@ -550,7 +567,7 @@ class ElsaConnector(BaseConnector):
             query_headers, body = self._format_query(full_query_dict)
             ret_val, run_query_response = self._make_rest_call(action_result, headers=query_headers, data=body)
 
-            if (phantom.is_fail(ret_val)):
+            if phantom.is_fail(ret_val):
                 self.save_progress("Run Query failed during make rest call")
                 return action_result.get_status()
 
@@ -563,13 +580,13 @@ class ElsaConnector(BaseConnector):
 
         try:
             summary = action_result.update_summary({})
-            summary['total_records'] = run_query_response["totalRecords"]
-            summary['records_returned'] = run_query_response["recordsReturned"]
-            summary['query_id'] = run_query_response["qid"]
+            summary["total_records"] = run_query_response["totalRecords"]
+            summary["records_returned"] = run_query_response["recordsReturned"]
+            summary["query_id"] = run_query_response["qid"]
             cef_data = []
 
             cef_map_to_use = param.get("output_cef_map", DEFAULT_CEF_MAP)
-            if type(cef_map_to_use) == str:
+            if isinstance(cef_map_to_use, str):
                 try:
                     cef_map_to_use = ast.literal_eval(cef_map_to_use)
                 except Exception as e:
@@ -583,13 +600,13 @@ class ElsaConnector(BaseConnector):
                 # run_query_response["results"][event_no]["cef"] = cef_dict
 
             # action_result.add_data({'raw_results': run_query_response["results"]})
-            action_result.add_data({'cef': cef_data})
+            action_result.add_data({"cef": cef_data})
 
         except Exception as e:
             self.set_status(phantom.APP_ERROR, ELSA_ERR_QUERY_RETURNED_INVALID_DATA, e)
             return self.get_status()
 
-        if (phantom.is_fail(ret_val)):
+        if phantom.is_fail(ret_val):
             self.save_progress("Run Query Failed")
             return action_result.set_status(phantom.APP_ERROR, "Run Query failed")
 
@@ -606,25 +623,26 @@ class ElsaConnector(BaseConnector):
 
         self.debug_print("action_id", self.get_action_identifier())
 
-        if (action_id == self.ACTION_ID_TEST_CONNECTIVITY):
+        if action_id == self.ACTION_ID_TEST_CONNECTIVITY:
             ret_val = self._test_connectivity(param)
-        elif (action_id == self.ACTION_ID_ON_POLL):
+        elif action_id == self.ACTION_ID_ON_POLL:
             ret_val = self._on_poll(param)
-        elif (action_id == self.ACTION_ID_RUN_QUERY):
+        elif action_id == self.ACTION_ID_RUN_QUERY:
             ret_val = self._run_query(param)
 
         return ret_val
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import sys
 
     import pudb
+
     pudb.set_trace()
 
-    if (len(sys.argv) < 2):
-        print "No test json specified as input"
+    if len(sys.argv) < 2:
+        print("No test json specified as input")
         exit(0)
 
     with open(sys.argv[1]) as f:
@@ -635,6 +653,6 @@ if __name__ == '__main__':
         connector = ElsaConnector()
         connector.print_progress_message = True
         ret_val = connector._handle_action(json.dumps(in_json), None)
-        print (json.dumps(json.loads(ret_val), indent=4))
+        print(json.dumps(json.loads(ret_val), indent=4))
 
     exit(0)
